@@ -1,0 +1,4 @@
+name = "Promises"
+uuid = "cca9e9fb-1a0b-4343-83fe-2ea4071e2e61"
+authors = ["Joe Peralta <joe@crimsonhexagon.us>"]
+version = "0.1.0"
