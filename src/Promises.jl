@@ -141,8 +141,10 @@ end
 
   p = Promise{String}()
   f = p.future
-  @async begin; setResult(p,"1"); end
-  @test f.result == Some("1")
+  t = @task begin; setResult(p,"1"); end
+  schedule(t)
+  wait(t)
+  @test f.result == Promises.Some("1")
 end
 
 @testset "Futures" begin
