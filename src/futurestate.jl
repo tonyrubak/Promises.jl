@@ -7,7 +7,7 @@ struct FutureStateResult{T} <: FutureState{T} value::T end
 struct FutureStateError{T} <: FutureState{T} error::Exception end
 struct FutureStateCancelled{T} <: FutureState{T} end
 
-function getResult(state::FutureState)
+function getResult(::FutureState)
     nothing
 end
 
@@ -15,7 +15,7 @@ function getResult(state::FutureStateResult)
     state.value
 end
 
-function getError(state::FutureState)
+function getError(::FutureState)
     nothing
 end
 
@@ -23,11 +23,11 @@ function getError(state::FutureStateError)
     state.error
 end
 
-function isCancelled(state::FutureState)
+function isCancelled(::FutureState)
     false
 end
 
-function isCancelled(state::FutureStateCancelled)
+function isCancelled(::FutureStateCancelled)
     true
 end
 
