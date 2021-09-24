@@ -14,6 +14,7 @@ struct Some{T} <: Option{T}
   value::T
 end
 
+include("src/futurestate.jl")
 include("src/future.jl")
 include("src/promise.jl")
 include("src/tests.jl")
