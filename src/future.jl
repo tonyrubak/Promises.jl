@@ -25,8 +25,15 @@ function cancelledFuture(t::Type)
     p.future
 end
 
-function futureWithResolutionOf(f::Future)
-    Future(f.state, Threads.Condition())
+function futureWithResolutionOf(f::Future{T}) where T
+    state = if f.state isa FutureStateResult{T}
+        state = FutureStateResult{T}(getResult(f.state))
+    elseif f.state isa FutureStateError{T}
+        state = FutureStateError{T}(getError(f.state))
+    else
+        state = FutureStateCancelled{T}()
+    end
+    Future(state, Threads.Condition())
 end
 
 function isResolved(f::Future)
