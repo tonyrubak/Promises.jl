@@ -29,21 +29,21 @@ function futureWithResolutionOf(f::Future)
     Future(f.state, Threads.Condition())
 end
 
-function isResolved(f::Future{T}) where T
+function isResolved(f::Future)
     lock(f.cv)
-    retval = f.state != FutureStateUnresolved{T}()
+    retval = !(f.state isa FutureStateUnresolved)
     unlock(f.cv)
     retval
 end
 
-function hasResult(f::Future{T}) where T
+function hasResult(f::Future)
     lock(f.cv)
     retval = getResult(f.state) !== nothing
     unlock(f.cv)
     retval
 end
 
-function hasError(f::Future{T}) where T
+function hasError(f::Future)
     lock(f.cv)
     retval = getError(f.state) !== nothing
     unlock(f.cv)
