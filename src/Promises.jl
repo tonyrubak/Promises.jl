@@ -4,15 +4,7 @@ export isResolved, hasResult, hasError
 export futureWithResult, futureWithError, cancelledFuture
 export futureWithResolutionOf
 export setResult, setError, cancel, waitOn
-export getResult, getError
-
-abstract type Option{T} end
-
-struct None{T} <: Option{T} end
-
-struct Some{T} <: Option{T}
-  value::T
-end
+export getResult, getError, isCancelled
 
 include("src/futurestate.jl")
 include("src/future.jl")

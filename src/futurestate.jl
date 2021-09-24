@@ -1,3 +1,5 @@
+import Base.:(==)
+
 abstract type FutureState{T} end
 
 struct FutureStateUnresolved{T} <: FutureState{T} end
