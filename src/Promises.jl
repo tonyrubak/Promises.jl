@@ -4,11 +4,12 @@ export isResolved, hasResult, hasError
 export futureWithResult, futureWithError, cancelledFuture
 export futureWithResolutionOf
 export setResult, setError, cancel, waitOn
-export getResult, getError, isCancelled
+export getResult, getError, isCancelled, getResultOrWait
+export eventually, then
 
-include("src/futurestate.jl")
-include("src/future.jl")
-include("src/promise.jl")
-include("src/tests.jl")
+include("futurestate.jl")
+include("future.jl")
+include("promise.jl")
+include("tests.jl")
 
 end # module

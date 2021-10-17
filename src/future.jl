@@ -1,10 +1,11 @@
 mutable struct Future{T}
     state::FutureState{T}
     cv::Threads.Condition
+    continuation
 end
 
 function Future{T}() where T
-    Future{T}(FutureStateUnresolved{T}(), Threads.Condition())
+    Future{T}(FutureStateUnresolved{T}(), Threads.Condition(), nothing)
 end
 
 function futureWithResult(result::T) where T
@@ -33,7 +34,7 @@ function futureWithResolutionOf(f::Future{T}) where T
     else
         state = FutureStateCancelled{T}()
     end
-    Future(state, Threads.Condition())
+    Future(state, Threads.Condition(), nothing)
 end
 
 function isResolved(f::Future)
@@ -61,24 +62,36 @@ function setResult(f::Future{T}, result::T) where T
     lock(f.cv)
     @assert f.state isa FutureStateUnresolved
     f.state = FutureStateResult{T}(result)
+    cont = f.continuation
     notify(f.cv)
     unlock(f.cv)
+    if cont !== nothing
+        cont(f)
+    end
 end
 
 function setError(f::Future{T}, error::Exception) where T
     lock(f.cv)
     @assert f.state isa FutureStateUnresolved
     f.state = FutureStateError{T}(error)
+    cont = f.continuation
     notify(f.cv)
     unlock(f.cv)
+    if cont !== nothing
+        cont(f)
+    end
 end
 
 function cancel(f::Future{T}) where T
     lock(f.cv)
     @assert f.state isa FutureStateUnresolved
     f.state = FutureStateCancelled{T}()
+    cont = f.continuation
     notify(f.cv)
     unlock(f.cv)
+    if cont !== nothing
+        cont(f)
+    end
 end
 
 function waitOn(f::Future)
@@ -114,4 +127,33 @@ end
 function isCancelledOrWait(f::Future)
     waitOn(f)
     isCancelled(f)
+end
+
+function eventually(f::Future, block)
+    setContinuation(f, block)
+end
+
+function setContinuation(f::Future, block)
+    lock(f.cv.lock)
+    if f.continuation !== nothing
+        unlock(f.cv)
+        throw(ArgumentError("Continuation Already Set"))
+    end
+    
+    f.continuation = block
+    resolved = isResolved(f)
+    
+    unlock(f.cv)
+    if (resolved)
+        f.continuation(f)
+    end
+end
+
+function then(f::Future, task, nextResultType::Type)
+    promise = Promise{nextResultType}()
+    eventually(f, future -> begin
+        f2 = task(future)
+        eventually(f2, fut2 -> setResolution(promise, fut2))
+    end)
+    promise.future
 end

@@ -101,4 +101,41 @@ end
     @test !hasError(f2)
     @test isCancelled(f2)
 end
+
+@testset "Continuations" begin
+    p = Promise{String}()
+    f = p.future
+
+    eventually(f,future -> @test getResult(f) == "1")
+    setResult(p,"1")
+    waitOn(f)
+
+    p = Promise{String}()
+    f = p.future
+        
+    f2 = then(f,future -> begin
+                p = Promise{String}()
+                setResult(p,getResultOrWait(future) * "2")
+                return p.future
+            end, String)
+        
+    setResult(p,"1")
+    waitOn(f)
+    @test hasResult(f2)
+    @test getResult(f2) == "12"
+
+    p = Promise{String}()
+    f = p.future
+    
+    f2 = then(f, future -> begin
+        p = Promise{String}()
+        @async setResult(p, getResultOrWait(future) * "2")
+        p.future
+        end, String)
+    
+    setResult(p, "1")
+    waitOn(f2)
+    @test hasResult(f2)
+    @test getResult(f2) == "12"
+end
 end
