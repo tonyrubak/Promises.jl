@@ -131,10 +131,57 @@ end
         p = Promise{String}()
         @async setResult(p, getResultOrWait(future) * "2")
         p.future
-        end, String)
+    end, String)
     
     setResult(p, "1")
     waitOn(f2)
+    @test hasResult(f2)
+    @test getResult(f2) == "12"
+
+    p = Promise{String}()
+    f = p.future
+
+    f2 = then(f, future -> begin
+        @test hasResult(future)
+        futureWithResolutionOf(future)
+    end, String)
+
+    setResult(p, "42")
+    @test hasResult(f2)
+    @test getResult(f2) == "42"
+
+    p = Promise{String}()
+    f = p.future
+
+    f2 = then(f, future -> begin
+        @test hasError(future)
+        futureWithResolutionOf(future)
+    end, String)
+
+    setError(p, ErrorException("Test Error"))
+    @test hasError(f2)
+    @test getError(f2) isa ErrorException
+
+    p = Promise{String}()
+    f = p.future
+
+    f2 = then(f, future -> begin
+        @test isCancelled(future)
+        futureWithResolutionOf(future)
+    end, String)
+
+    cancel(p)
+    @test isCancelled(f2)
+
+    p = Promise{String}()
+    f = p.future
+
+    f2 = thenWithResult(f, future -> begin
+        p = Promise{String}()
+        setResult(future.value * "2")
+    end, String)
+
+    setResult(p, "1")
     @test hasResult(f2)
     @test getResult(f2) == "12"
 end
