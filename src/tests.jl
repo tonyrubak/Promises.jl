@@ -1,6 +1,6 @@
 module Tests
 using ..Promises
-using Test
+using Lazy, Test
 
 @testset "Unresolved Promise" begin
     p = Promise{String}()
@@ -186,6 +186,68 @@ end
     @test hasResult(f2)
     @test getResult(f2) == "12"
 
+    p = Promise{String}()
+    f = p.future
 
+    f2 = thenWithResult(f, value -> begin
+        p = Promise{String}()
+        setResult(p, val * "2")
+        p.future
+    end, String)
+
+    setError(p, ErrorException("Test Error"))
+    @test hasError(f2)
+    @test getError(f2) isa ErrorException
+
+    p = Promise{String}()
+    f = p.future
+
+    f2 = thenWithResult(f, future -> begin
+        @assert false
+        p = Promise{String}()
+        setResult(p, val * "2")
+        p.future
+    end, String)
+
+    cancel(p)
+    @test isCancelled(f2)
+
+    p = Promise{String}()
+    f = p.future
+
+    f2 = @> f begin
+        onError(err -> @assert false)
+        then(future -> futureWithResolutionOf(future), String)
+    end
+
+    setResult(p, "1")
+    @test hasResult(f2)
+    @test getResult(f2) == "1"
+
+    p = Promise{String}()
+    f = p.future
+    
+    f2 = @> f begin
+        onError(err -> @test true)
+        then(future -> begin
+            @test true
+            futureWithResolutionOf(future)
+        end, String)
+    end
+    
+    setError(p, ErrorException("Test Error"))
+    @test hasError(f2)
+    @test getError(f2) isa ErrorException
+
+    p = Promise{String}()
+    f = p.future
+    
+    f2 = @> f begin
+        onError(err -> @assert false)
+    end
+
+    cancel(p)
+    @test isCancelled(f2)
+    @test getResult(f2) === nothing
 end
 end

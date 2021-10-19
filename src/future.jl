@@ -1,4 +1,4 @@
-export eventually, then, thenWithResult
+export eventually, then, thenWithResult, onError
 
 mutable struct Future{T}
     state::FutureState{T}
@@ -171,6 +171,17 @@ function thenWithResult(f::Future, task, nextResultType::Type)
                 setResolution(promise, fut2)
             end)
         end
+    end)
+    promise.future
+end
+
+function onError(f::Future{T}, continuation) where T
+    promise = Promise{T}()
+    eventually(f, future -> begin
+        if future.state isa FutureStateError
+            continuation(getError(future))
+        end
+        setResolution(promise, future)
     end)
     promise.future
 end
