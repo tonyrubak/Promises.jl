@@ -340,5 +340,34 @@ end
     waitOn(fut2)
     @test hasError(fut2)
     @test getResult(fut2) === nothing
+
+    x = 0
+    fut3 = @future begin
+        sleep(2)
+        if x > 1
+            x + 1
+        else
+            throw(ErrorException("Not Defined"))
+        end
+    end
+    x = 2
+    waitOn(fut3)
+    @test hasResult(fut3)
+    @test getResult(fut3) == 3
+
+    x = 0
+    fut4 = @future begin
+        sleep(2)
+        if $x > 1
+            $x + 1
+        else
+            throw(ErrorException("Not Defined"))
+        end
+    end
+    x = 2
+    waitOn(fut4)
+    @test hasError(fut4)
+    @test getResult(fut4) === nothing
+
 end
 end
