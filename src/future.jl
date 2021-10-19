@@ -256,9 +256,3 @@ macro future(expr)
         fut
     end
 end
-
-delayed(str) = @asyncfn begin
-    sleep(2)
-    println(str)
-    str
-end
