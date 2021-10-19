@@ -294,4 +294,24 @@ end
     @test getResult(results[2]) ==  "2"
     @test getResult(results[3]) ==  "3"
 end
+
+@testset "@asyncfn" begin
+    f(x) = @asyncfn begin
+        if x > 1
+            x + 1
+        else
+            throw(ErrorException("Not Defined"))
+        end
+    end
+
+    fut1 = f(2)
+    waitOn(fut1)
+    @test hasResult(fut1)
+    @test getResult(fut1) == 3
+
+    fut2 = f(0)
+    waitOn(fut2)
+    @test hasError(fut2)
+    @test getResult(fut2) === nothing
+end
 end
