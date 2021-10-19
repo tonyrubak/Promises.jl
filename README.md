@@ -15,12 +15,11 @@ its result returned via a future.
 Similar to @async, but the return value is a future instead of a Task. @future
 also supports variable interpolation from the calling environment via $.
 
-The library supports chaining of futures with:
+The library supports chaining of futures with the following (and async variants):
 1. eventually
 2. then
 3. thenWithResult
 4. onError
-and async variants.
 
 # Usage
 ```julia
