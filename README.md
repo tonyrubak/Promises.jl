@@ -23,12 +23,13 @@ The library supports chaining of futures with:
 and async variants.
 
 # Usage
-    getData(url) = @asyncfn begin
-        data = apiCall(url)
-        data
-    end
+```julia
+getData(url) = @asyncfn begin
+    data = apiCall(url)
+    data
+end
 
-    parsedData = @> getData("url") begin
-        thenWithResult(parseData)
-        onError(handleError)
-    end
+parsedData = @> getData("url") begin
+    thenWithResult(parseData)
+    onError(handleError)
+end```
