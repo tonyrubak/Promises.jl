@@ -32,4 +32,5 @@ end
 parsedData = @> getData("url") begin
     thenWithResult(parseData)
     onError(handleError)
-end```
+end
+```
