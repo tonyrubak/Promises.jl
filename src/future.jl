@@ -1,4 +1,9 @@
-export eventually, then, thenWithResult, onError
+export futureWithResult, futureWithError, cancelledFuture
+export futureWithResolutionOf
+export isResolved, hasResult, hasError
+export getResult, getError, isCancelled, getResultOrWait, waitOn
+export eventually, then, thenWithResult, onError, whenAll
+export eventuallyAsync, thenAsync
 
 mutable struct Future{T}
     state::FutureState{T}
@@ -131,18 +136,22 @@ function isCancelledOrWait(f::Future)
     isCancelled(f)
 end
 
-function eventually(f::Future, block)
-    setContinuation(f, block)
+function eventually(f::Future, continuation)
+    setContinuation(f, future -> continuation(future))
 end
 
-function setContinuation(f::Future, block)
+function eventuallyAsync(f::Future, continuation)
+    setContinuation(f, future -> @async continuation(future))
+end
+
+function setContinuation(f::Future, continuation)
     lock(f.cv)
     if f.continuation !== nothing
         unlock(f.cv)
         throw(ArgumentError("Continuation Already Set"))
     end
     
-    f.continuation = block
+    f.continuation = continuation
     resolved = isResolved(f)
     
     unlock(f.cv)
@@ -156,6 +165,17 @@ function then(f::Future, task, nextResultType::Type)
     eventually(f, future -> begin
         f2 = task(future)
         eventually(f2, fut2 -> setResolution(promise, fut2))
+    end)
+    promise.future
+end
+
+function thenAsync(f::Future, task, nextResultType::Type)
+    promise = Promise{nextResultType}()
+    eventuallyAsync(f, future -> begin
+        f2 = task(future)
+        eventuallyAsync(f2, fut2 -> begin
+            setResolution(promise, fut2)
+        end)
     end)
     promise.future
 end
@@ -183,5 +203,19 @@ function onError(f::Future{T}, continuation) where T
         end
         setResolution(promise, future)
     end)
+    promise.future
+end
+
+function whenAll(futures::Vector{Future{T}}) where T
+    promise = Promise{Vector{Future{T}}}()
+    counter = Threads.Atomic{Int}(length(futures))
+    for element in futures
+        eventually(element, future -> begin
+            Threads.atomic_sub!(counter,1)
+            if (counter[] == 0)
+                setResult(promise, futures)
+            end
+        end)
+    end
     promise.future
 end

@@ -1,3 +1,5 @@
+export setResult, setError, cancel, setResolution
+
 struct Promise{T}
     future::Future{T}
 end
@@ -18,10 +20,10 @@ function cancel(p::Promise)
     cancel(p.future)
 end
 
-function setResolution(p::Promise{T}, of::Future) where T
-    if of.state isa FutureStateResult{T}
+function setResolution(p::Promise{T}, of::Future{T}) where T
+    if of.state isa FutureStateResult
         setResult(p,of.state.value)
-    elseif of.state isa FutureStateError{T}
+    elseif of.state isa FutureStateError
         setError(p,of.state.error)
     else
         cancel(p)

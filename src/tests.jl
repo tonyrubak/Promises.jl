@@ -112,15 +112,23 @@ end
 
     p = Promise{String}()
     f = p.future
+    
+    eventuallyAsync(f, future -> begin
+        @test getResult(f) == "1"
+    end)
+        
+    setResult(p, "1")
+
+    p = Promise{String}()
+    f = p.future
         
     f2 = then(f,future -> begin
                 p = Promise{String}()
-                setResult(p,getResultOrWait(future) * "2")
+                setResult(p,getResult(future) * "2")
                 return p.future
             end, String)
         
     setResult(p,"1")
-    waitOn(f)
     @test hasResult(f2)
     @test getResult(f2) == "12"
 
@@ -129,7 +137,7 @@ end
     
     f2 = then(f, future -> begin
         p = Promise{String}()
-        @async setResult(p, getResultOrWait(future) * "2")
+        @async setResult(p, getResult(future) * "2")
         p.future
     end, String)
     
@@ -172,6 +180,20 @@ end
 
     cancel(p)
     @test isCancelled(f2)
+
+    p = Promise{String}()
+    f = p.future
+        
+    f2 = thenAsync(f, future -> begin
+        p = Promise{String}()
+        setResult(p, getResult(future) * "2")
+        p.future
+    end, String)
+    
+    setResult(p, "1")
+    waitOn(f2)
+    @test hasResult(f2)
+    @test getResult(f2) == "12"
 
     p = Promise{String}()
     f = p.future
@@ -249,5 +271,27 @@ end
     cancel(p)
     @test isCancelled(f2)
     @test getResult(f2) === nothing
+end
+
+@testset "When All" begin
+    p1 = Promise{String}()
+    p2 = Promise{String}()
+    p3 = Promise{String}()
+    
+    futures = [p1.future, p2.future, p3.future]
+    allFuture = whenAll(futures)
+    
+    @test !hasResult(allFuture)
+    setResult(p3, "3")
+    @test !hasResult(allFuture)
+    setResult(p2, "2")
+    @test !hasResult(allFuture)
+    setResult(p1, "1")
+    @test hasResult(allFuture)
+        
+    results = getResult(allFuture)
+    @test getResult(results[1]) ==  "1"
+    @test getResult(results[2]) ==  "2"
+    @test getResult(results[3]) ==  "3"
 end
 end
