@@ -1,4 +1,4 @@
-mutable struct Promise{T}
+struct Promise{T}
     future::Future{T}
 end
 

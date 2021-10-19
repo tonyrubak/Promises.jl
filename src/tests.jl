@@ -176,13 +176,16 @@ end
     p = Promise{String}()
     f = p.future
 
-    f2 = thenWithResult(f, future -> begin
+    f2 = thenWithResult(f, val -> begin
         p = Promise{String}()
-        setResult(future.value * "2")
+        setResult(p, val * "2")
+        p.future
     end, String)
 
     setResult(p, "1")
     @test hasResult(f2)
     @test getResult(f2) == "12"
+
+
 end
 end

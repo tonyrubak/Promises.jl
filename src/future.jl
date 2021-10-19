@@ -1,3 +1,5 @@
+export eventually, then, thenWithResult
+
 mutable struct Future{T}
     state::FutureState{T}
     cv::Threads.Condition
@@ -134,7 +136,7 @@ function eventually(f::Future, block)
 end
 
 function setContinuation(f::Future, block)
-    lock(f.cv.lock)
+    lock(f.cv)
     if f.continuation !== nothing
         unlock(f.cv)
         throw(ArgumentError("Continuation Already Set"))
@@ -154,6 +156,21 @@ function then(f::Future, task, nextResultType::Type)
     eventually(f, future -> begin
         f2 = task(future)
         eventually(f2, fut2 -> setResolution(promise, fut2))
+    end)
+    promise.future
+end
+
+function thenWithResult(f::Future, task, nextResultType::Type)
+    promise = Promise{nextResultType}()
+    eventually(f, future -> begin
+        if !(future.state isa FutureStateResult)
+            setResolution(promise, future)
+        else
+            f2 = task(future.state.value)
+            eventually(f2, fut2 -> begin
+                setResolution(promise, fut2)
+            end)
+        end
     end)
     promise.future
 end

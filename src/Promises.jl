@@ -5,7 +5,6 @@ export futureWithResult, futureWithError, cancelledFuture
 export futureWithResolutionOf
 export setResult, setError, cancel, waitOn
 export getResult, getError, isCancelled, getResultOrWait
-export eventually, then
 
 include("futurestate.jl")
 include("future.jl")
