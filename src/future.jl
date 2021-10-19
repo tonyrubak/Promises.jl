@@ -4,6 +4,7 @@ export isResolved, hasResult, hasError
 export getResult, getError, isCancelled, getResultOrWait, waitOn
 export eventually, then, thenWithResult, onError, whenAll
 export eventuallyAsync, thenAsync
+export @asyncfn, @future
 
 mutable struct Future{T}
     state::FutureState{T}
@@ -218,4 +219,46 @@ function whenAll(futures::Vector{Future{T}}) where T
         end)
     end
     promise.future
+end
+
+macro asyncfn(expr)
+    thunk = esc(:(()->($expr)))
+    quote
+        p = Promise{Any}()
+        fut = p.future
+        @async begin
+            try
+                setResult(fut, $thunk())
+            catch ex
+                setError(fut, ex)
+            end
+        end
+        fut
+    end
+end
+
+macro future(expr)
+    letargs = Base._lift_one_interp!(expr)
+
+    thunk = esc(:(()->($expr)))
+    quote
+        p = Promise{Any}()
+        fut = p.future
+        let $(letargs...)
+            @async begin
+                try
+                    setResult(fut, $thunk())
+                catch ex
+                    setError(fut, ex)
+                end
+            end
+        end
+        fut
+    end
+end
+
+delayed(str) = @asyncfn begin
+    sleep(2)
+    println(str)
+    str
 end

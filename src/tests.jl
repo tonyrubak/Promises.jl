@@ -106,7 +106,7 @@ end
     p = Promise{String}()
     f = p.future
 
-    eventually(f,future -> @test getResult(f) == "1")
+    eventually(f, future -> @test getResult(f) == "1")
     setResult(p,"1")
     waitOn(f)
 
