@@ -1,3 +1,4 @@
+export Future
 export futureWithResult, futureWithError, cancelledFuture
 export futureWithResolutionOf
 export isResolved, hasResult, hasError
@@ -14,6 +15,10 @@ end
 
 function Future{T}() where T
     Future{T}(FutureStateUnresolved{T}(), Threads.Condition(), nothing)
+end
+
+function Future()
+    Future{Any}()
 end
 
 function futureWithResult(result::T) where T
@@ -170,6 +175,10 @@ function then(f::Future, task, nextResultType::Type)
     promise.future
 end
 
+function then(f::Future, task)
+    then(f,task,Any)
+end
+
 function thenAsync(f::Future, task, nextResultType::Type)
     promise = Promise{nextResultType}()
     eventuallyAsync(f, future -> begin
@@ -179,6 +188,10 @@ function thenAsync(f::Future, task, nextResultType::Type)
         end)
     end)
     promise.future
+end
+
+function thenAsync(f::Future, task)
+    thenAsync(f, task, Any)
 end
 
 function thenWithResult(f::Future, task, nextResultType::Type)
@@ -194,6 +207,10 @@ function thenWithResult(f::Future, task, nextResultType::Type)
         end
     end)
     promise.future
+end
+
+function thenWithResult(f::Future, task)
+    thenWithResult(f, task, Any)
 end
 
 function onError(f::Future{T}, continuation) where T
