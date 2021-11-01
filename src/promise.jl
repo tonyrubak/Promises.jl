@@ -1,3 +1,4 @@
+export Promise
 export setResult, setError, cancel, setResolution
 
 struct Promise{T}
